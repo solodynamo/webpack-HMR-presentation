@@ -1,0 +1,167 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>PostCss: By @solodynamo</title>
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/black.css">
+
+		<style media="screen">
+			.reveal h2.js-text-shadow {
+				text-shadow: 1px 1px 15px rgba(0,0,0,0.7);
+			}
+
+			.reveal section img {
+				background: transparent;
+				border: none;
+				box-shadow: none;
+			}
+
+			.reveal a,
+			.js-highlight {
+				color: #E10079;
+			}
+
+			.reveal a:hover {
+				color: #ffaf86;
+			}
+
+			.reveal .progress span {
+				background-color: #E10079;
+			}
+
+			.reveal .controls .navigate-up,
+			.reveal .controls .navigate-up.enabled {
+				border-bottom-color: #E10079;
+			}
+
+			.reveal .controls .navigate-right,
+			.reveal .controls .navigate-right.enabled {
+				border-left-color: #E10079;
+			}
+
+			.reveal .controls .navigate-down,
+			.reveal .controls .navigate-down.enabled {
+				border-top-color: #E10079;
+			}
+
+			.reveal .controls .navigate-left,
+			.reveal .controls .navigate-left.enabled {
+				border-right-color: #E10079;
+			}
+
+			.reveal li {
+				list-style-type: none;
+			}
+
+			.reveal li::before {
+				content: '▪';
+				display: inline-block;
+				color: #E10079;
+				margin-right: 15px;
+			}
+		</style>
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section>
+					<h4>Webpack HMR: <span class="js-highlight">by @solodynamo</span></h4>
+				</section>
+				<section>
+					<h3>First Up : The Websocket API</h3>
+					<img src="media/one.png" class="stretch"/>
+					<ol>
+						<li class="fragment fade-up">This specification defines an API that enables Web pages to use the WebSocket for two-way communication with a remote host.</li>
+					</ol>
+				</section>
+				<section>
+					<h3>Sock JS</h3>
+						<img src="media/two.png" class="stretch"/>
+						<ol>
+							<li class="fragment fade-up">SockJS mimics the WebSockets API, but instead of WebSocket there is a SockJS Javascript object.</li>
+							<li class="fragment fade-up">Webpack-dev-server uses SockJS</li>
+						</ol>
+				</section>
+				<section>
+						<h3>Full Flow Of HMR</h3>
+						<img src="media/three.png" class="stretch"/>
+						<ol>
+							<li class="fragment fade-up">Too overwhelming 😊 , lets take it in steps !</li>
+						</ol>
+				</section>
+				<section>
+						<h3>Step 1: HotModuleReplacementPlugin to generates a manifest(a JSON containing list of changed modules) and an update file(a JS with the actual change info). HMR plugin is part of webpack core.</h3>
+						
+							<a class="fragment fade-up">https://github.com/webpack/webpack/blob/master/lib/HotModuleReplacementPlugin.js</a>
+						
+				</section>
+				<section>
+					<h2>Step 2: Webpack then tells webpack-dev-server about the changes.webpack-dev-server is not in core of webpack.</h2>
+				</section>
+				<section>
+					<h2>Step 3: webpack-dev-server tells “webpack-dev-server/client”(JS file) running in the browser via webSocket by sending “invalid” notification via WebSocket.</h2>
+					<a class="fragment fade-up">https://github.com/webpack/webpack-dev-server/blob/master/client/index.js</a>
+				</section>
+				<section>
+					<h6>Step 4: “webpack-dev-server/client” then sends the initial hash(e.g. b2e2d54372f42c1b2352) that it got when the app was first loaded to hot/dev-server library. “hot/dev-server” acts like the main interface to all other JS files.</h6>
+					<a class="fragment fade-up">https://github.com/webpack/webpack/blob/master/hot/dev-server.js</a>	
+				</section>
+				<section>
+					<h3>Step 5: “hot/dev-server” then calls internal libraries(like JSONP runtime) that are also injected by Webpack to download the manifest file.</h3>
+					<a class="fragment fade-up">https://github.com/webpack/webpack/blob/master/lib/JsonpChunkTemplatePlugin.js</a>	
+				</section>
+				<section>
+					<h3>Step 6: JSONP runtime uses hash and loads the manifest file from the webpack-dev-server.</h3>
+					<a class="fragment fade-up">https://github.com/webpack/webpack-sources/blob/master/lib/ConcatSource.js</a>	
+				</section>
+				<section>
+					<h3>Step 7: The manifest file contains details about chunks that need to be uploaded to the browser. It’s file name looks like: b2e2d54372f42c1b2352.hot-update.json and it’s content looks like this: {“h”:”b3632c2a800d437e17df”,”c”:[0]}</h3>
+				</section>
+				<section>
+					<h3>Step 8: JSONP runtime then uses information contained inside the manifest file to load all the “Update” files and adds them to the DOM.</h3>
+				</section>
+				<section>
+					<h3> Updates call HMR runtime with the module id and the actual changes.</h3>
+				</section>
+				<section>
+					<h7>HMR runtime itself doesn’t know how to deal with the changes. So it delegates this job to corresponding loaders like react-hot-loader runtimes or style-loader runtimes to apply changes.</h7>
+				</section>
+				<section>
+					<h3>Sayonara</h3>
+				</section>
+			</div>
+		</div>
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+		<script>
+			// More info https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				history: true,
+
+				// More info https://github.com/hakimel/reveal.js#dependencies
+				dependencies: [
+					{ src: 'plugin/markdown/marked.js' },
+					{ src: 'plugin/markdown/markdown.js' },
+					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+			});
+		</script>
+	</body>
+</html>
